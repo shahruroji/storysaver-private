@@ -1,0 +1,250 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StorySaver Private</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #080d18;
+  color: white;
+  min-height: 100vh;
+  padding: 25px 15px;
+}
+
+.container {
+  max-width: 500px;
+  margin: 50px auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.logo {
+  font-size: 45px;
+  margin-bottom: 12px;
+}
+
+h1 {
+  font-size: 27px;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #929db1;
+  font-size: 14px;
+}
+
+.card {
+  background: #131c2e;
+  border: 1px solid #26344b;
+  border-radius: 18px;
+  padding: 23px;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #34445d;
+  background: #0b1424;
+  color: white;
+  outline: none;
+  margin-bottom: 17px;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  background: #5865f2;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: .6;
+}
+
+button:hover {
+  background: #4752d9;
+}
+
+.status {
+  margin-top: 17px;
+  color: #aab6ca;
+  font-size: 13px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.download {
+  margin-top: 20px;
+  display: none;
+}
+
+.note {
+  margin-top: 25px;
+  text-align: center;
+  color: #748198;
+  font-size: 12px;
+  line-height: 1.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="logo">📥</div>
+    <h1>StorySaver Private</h1>
+    <p class="subtitle">
+      Personal Instagram Media Downloader
+    </p>
+  </div>
+
+  <div class="card">
+
+    <label>Link Instagram</label>
+
+    <input
+      type="url"
+      id="igLink"
+      placeholder="Masukkan link Instagram..."
+    >
+
+    <label>URL file media yang boleh diunduh</label>
+
+    <input
+      type="url"
+      id="mediaUrl"
+      placeholder="Masukkan URL file foto/video..."
+    >
+
+    <button id="downloadBtn" onclick="downloadMedia()">
+      ⬇ Download Langsung
+    </button>
+
+    <div class="status" id="status">
+      Masukkan sumber media yang dapat diakses dan diunduh.
+    </div>
+
+    <div class="download" id="downloadArea">
+      <button onclick="downloadAgain()">
+        Download Ulang
+      </button>
+    </div>
+
+  </div>
+
+  <div class="note">
+    StorySaver Private v1.0<br>
+    Gunakan hanya untuk media milik sendiri
+    atau yang telah mendapatkan izin.
+  </div>
+
+</div>
+
+<script>
+let currentUrl = "";
+
+async function downloadMedia() {
+  const igLink = document.getElementById("igLink").value.trim();
+  const mediaUrl = document.getElementById("mediaUrl").value.trim();
+  const status = document.getElementById("status");
+  const button = document.getElementById("downloadBtn");
+
+  if (!igLink && !mediaUrl) {
+    status.textContent = "Masukkan sumber media terlebih dahulu.";
+    return;
+  }
+
+  if (!mediaUrl) {
+    status.textContent =
+      "Link Instagram saja belum cukup. Masukkan URL file media yang sah.";
+    return;
+  }
+
+  try {
+    const parsed = new URL(mediaUrl);
+
+    if (parsed.protocol !== "https:") {
+      throw new Error("Gunakan URL HTTPS.");
+    }
+
+    if (parsed.hostname === "instagram.com" ||
+        parsed.hostname.endsWith(".instagram.com")) {
+      throw new Error("Masukkan URL file media, bukan halaman Instagram.");
+    }
+
+    currentUrl = parsed.href;
+    button.disabled = true;
+    status.textContent = "Sedang mengambil file...";
+
+    const response = await fetch(currentUrl);
+
+    if (!response.ok) {
+      throw new Error("File tidak dapat diakses.");
+    }
+
+    const blob = await response.blob();
+
+    if (!blob.type.startsWith("image/") &&
+        !blob.type.startsWith("video/")) {
+      throw new Error("Sumber bukan file foto atau video.");
+    }
+
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = objectUrl;
+    a.download = "storysaver-" +
+      Date.now() +
+      (blob.type.startsWith("video/") ? ".mp4" : ".jpg");
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+
+    status.textContent = "Download berhasil dimulai!";
+    document.getElementById("downloadArea").style.display = "block";
+
+  } catch (error) {
+    status.textContent = "Gagal: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function downloadAgain() {
+  downloadMedia();
+}
+</script>
+
+</body>
+  </html>
+  
